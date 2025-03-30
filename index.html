@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mitchel Wodka - Data Wizard</title>
+    <style>
+        :root {
+            --matrix-green: #00ff00;
+            --matrix-dark-green: #003b00;
+            --bg-color: #000000;
+            --text-color: #00ff00;
+            --highlight-color: #39ff14;
+            --secondary-color: #0f0;
+            --terminal-bg: rgba(0, 15, 0, 0.9);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .page-layout {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        .matrix-column {
+            width: 15%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .left-matrix {
+            order: 1;
+        }
+
+        .right-matrix {
+            order: 3;
+        }
+
+        .content-column {
+            width: 70%;
+            max-width: 1000px;
+            order: 2;
+        }
+
+        .container {
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+            background-color: var(--terminal-bg);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            border: 1px solid var(--matrix-green);
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .matrix-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.4;
+        }
+
+        header {
+            text-align: center;
+            padding: 1rem 0;
+            border-bottom: 2px solid var(--matrix-green);
+            margin-bottom: 2rem;
+            animation: flicker 5s infinite;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px var(--matrix-green);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--matrix-green);
+            padding-bottom: 0.5rem;
+            text-shadow: 0 0 5px var(--matrix-green);
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--highlight-color);
+        }
+
+        .contact-info {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border-left: 3px solid var(--matrix-green);
+            background-color: rgba(0, 10, 0, 0.5);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s, transform 1s;
+        }
+
+        .section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .job {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px dashed var(--matrix-dark-green);
+        }
+
+        .job-title {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .job-company {
+            font-weight: bold;
+            color: var(--highlight-color);
+        }
+
+        .job-period {
+            font-style: italic;
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.7rem;
+            position: relative;
+        }
+
+        li::before {
+            content: ">";
+            position: absolute;
+            left: -1.2rem;
+            color: var(--highlight-color);
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.2em;
+            background-color: var(--matrix-green);
+            animation: blink 1s infinite;
+            vertical-align: text-bottom;
+            margin-left: 5px;
+        }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            92% { opacity: 1; }
+            93% { opacity: 0.5; }
+            94% { opacity: 1; }
+            96% { opacity: 0.8; }
+            97% { opacity: 1; }
+            98% { opacity: 0.5; }
+            99% { opacity: 1; }
+        }
+
+        .typewriter {
+            overflow: hidden;
+            white-space: nowrap;
+            margin: 0 auto;
+            letter-spacing: 2px;
+            animation: typing 3.5s steps(40, end);
+        }
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        .command-prompt::before {
+            content: "> ";
+            color: var(--highlight-color);
+        }
+
+        .command-input {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            outline: none;
+            width: calc(100% - 20px);
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem 0;
+            border-top: 2px solid var(--matrix-green);
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 1200px) {
+            .matrix-column {
+                width: 10%;
+            }
+            .content-column {
+                width: 80%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-layout {
+                flex-direction: column;
+            }
+            .matrix-column {
+                width: 100%;
+                height: 50px;
+                order: unset;
+            }
+            .content-column {
+                width: 100%;
+                order: unset;
+            }
+            .container {
+                padding: 1rem;
+                margin: 0;
+                border-left: none;
+                border-right: none;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            h2 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix-bg"></canvas>
+    
+    <div class="page-layout">
+        <div class="matrix-column left-matrix">
+            <canvas id="left-matrix" class="matrix-canvas"></canvas>
+        </div>
+        
+        <div class="content-column">
+            <div class="container">
+                <header>
+                    <h1 class="typewriter">MITCHEL WODKA</h1>
+                    <div class="contact-info">
+                        <span>Colorado Springs, CO 80916 • 512-924-3704 • {anything}@wodka.dev</span>
+                    </div>
+                    <h2 class="command-prompt">data {wizard} engineer<span class="cursor"></span></h2>
+                </header>
+                
+                <section id="experience" class="section">
+                    <h2>PROFESSIONAL EXPERIENCE</h2>
+                    
+                    <div class="job">
+                        <div class="job-title">
+                            <span class="job-company">Acrisure Innovation | Data Engineer | Fintech & Insurance Broker</span>
+                            <span class="job-period">Jul 2023 - present</span>
+                        </div>
+                        <ul>
+                            <li>Helped finish stack migration: SSIS, ADF, SQL Server Agent, SQL Server → Airflow, Databricks, dbt</li>
+                            <li>Created hyper ingestion framework (Scala, Kotlin) to quickly land new data sources in bronze</li>
+                            <li>Proposed and created Terraform projects to deploy and manage Azure, GCP infrastructure</li>
+                            <li>Architected and implemented Databricks workflows using [bronze → silver → gold] medallion architecture</li>
+                            <li>Created CI/CD pipelines, streamlining development and deployments</li>
+                            <li>Proposed and deployed DataHub (self-hosted) for data dictionary and lineage</li>
+                            <li>Updated a dozen daily batch ingestions from full loads to deltas, reducing runtimes from hours to minutes</li>
+                            <li>Proposed and implemented change data feed & delta shares for efficient downstream consumption</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="job">
+                        <div class="job-title">
+                            <span class="job-company">Clarke Associates, Inc. | Database & Data Warehouse Developer | Online Restaurant Supply</span>
+                            <span class="job-period">Jun 2022 – Jun 2023</span>
+                        </div>
+                        <ul>
+                            <li>OLTP highlights:
+                                <ul>
+                                    <li>Implementing db-level unit testing: added tSQLt and ephemeral databases to ADO build pipelines</li>
+                                    <li>Created highly performant stored procedures that execute 20 million times a day</li>
+                                </ul>
+                            </li>
+                            <li>OLAP highlights:
+                                <ul>
+                                    <li>Maintained data warehouse evolution and PBI semantic models</li>
+                                    <li>Created and maintained PBI reports</li>
+                                    <li>Mentored junior developers in database engineering best practices; reviewed pull requests</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="job">
+                        <div class="job-title">
+                            <span class="job-company">Grifols | Software Developer | Biopharmaceuticals</span>
+                            <span class="job-period">Sep 2019 – Jun 2022</span>
+                        </div>
+                        <ul>
+                            <li>Maintained custom dotnet applications used by laboratories for sample testing lifecycle</li>
+                            <li>Created interfaces allowing laboratories to communicate with hundreds of donor centers</li>
+                            <li>Optimized daily ETL, reducing runtime by 60%</li>
+                            <li>Proposed and created data warehouse for reporting and analytics</li>
+                            <li>Delivered top-tier escalation support for critical production issues</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="job">
+                        <div class="job-title">
+                            <span class="job-company">GTS | Apple Practice Consultant</span>
+                            <span class="job-period">Jun 2017 - Sep 2019</span>
+                        </div>
+                        <ul>
+                            <li>Developed a greenfield system (rails & postgres) for mass provisioning Apple devices, working with three engineers @ Apple
+                                <ul>
+                                    <li>provisioning system still used in 2024</li>
+                                </ul>
+                            </li>
+                            <li>Reduced labor cost by 65% after creating scripts to automate services performed on tens of thousands of PC's, iPads, iMacs and MacBooks each month</li>
+                            <li>Proposed and implemented auto-enrollment of thousands of Chromebooks monthly using Hak5 rubber duckies</li>
+                            <li>Provided Jamf crash-course to Apple Education customers</li>
+                        </ul>
+                    </div>
+                </section>
+                
+                <footer>
+                    <p>Mitchel Wodka | <span id="current-year"></span></p>
+                </footer>
+            </div>
+        </div>
+        
+        <div class="matrix-column right-matrix">
+            <canvas id="right-matrix" class="matrix-canvas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Set up main background Matrix effect (reduced opacity)
+        function setupMatrixBackground() {
+            const canvas = document.getElementById('matrix-bg');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Characters to use in the Matrix digital rain
+            const matrixChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-.=><[](){}/*&^%$#@!~";
+            const fontSize = 14;
+            const columns = Math.floor(canvas.width / fontSize);
+            
+            // Array to track the y position of each drop
+            const drops = [];
+            for (let i = 0; i < columns; i++) {
+                drops[i] = Math.random() * -100;
+            }
+            
+            function draw() {
+                // Black background with opacity to create trail effect
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Set font and color for matrix characters
+                ctx.fillStyle = '#00ff00';
+                ctx.font = `${fontSize}px monospace`;
+                
+                // Loop through each drop
+                for (let i = 0; i < drops.length; i++) {
+                    // Get a random character
+                    const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                    
+                    // Draw the character
+                    const x = i * fontSize;
+                    const y = drops[i] * fontSize;
+                    
+                    // Occasional brighter characters (white)
+                    if (Math.random() > 0.98) {
+                        ctx.fillStyle = '#fff';
+                    } else {
+                        ctx.fillStyle = '#0f0';
+                    }
+                    
+                    ctx.fillText(text, x, y);
+                    
+                    // Reset drop if it reaches bottom or randomly
+                    if (y > canvas.height && Math.random() > 0.98) {
+                        drops[i] = 0;
+                    }
+                    
+                    // Move drop down
+                    drops[i]++;
+                }
+            }
+            
+            // Animation loop
+            setInterval(draw, 80);
+        }
+        
+        // Setup matrix rain for side columns
+        function setupMatrixColumn(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size to match parent
+            function resizeCanvas() {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+            }
+            
+            resizeCanvas();
+            
+            // Characters to use in the Matrix digital rain
+            const matrixChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-.=><[](){}/*&^%$#@!~";
+            const fontSize = 18; // Slightly larger characters for side columns
+            const columns = Math.floor(canvas.width / fontSize);
+            
+            // Array to track the y position of each drop
+            const drops = [];
+            for (let i = 0; i < columns; i++) {
+                drops[i] = Math.random() * -100;
+            }
+            
+            function draw() {
+                // Black background with opacity to create trail effect
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Set font and color for matrix characters
+                ctx.font = `${fontSize}px monospace`;
+                
+                // Loop through each drop
+                for (let i = 0; i < drops.length; i++) {
+                    // Get a random character
+                    const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                    
+                    // Draw the character
+                    const x = i * fontSize;
+                    const y = drops[i] * fontSize;
+                    
+                    // Vary the brightness/intensity randomly
+                    const intensity = Math.random();
+                    if (intensity > 0.95) {
+                        ctx.fillStyle = '#fff'; // Occasional white characters
+                    } else if (intensity > 0.7) {
+                        ctx.fillStyle = '#0f0'; // Bright green
+                    } else {
+                        ctx.fillStyle = '#050'; // Darker green
+                    }
+                    
+                    ctx.fillText(text, x, y);
+                    
+                    // Reset drop if it reaches bottom or randomly
+                    if (y > canvas.height && Math.random() > 0.98) {
+                        drops[i] = 0;
+                    }
+                    
+                    // Move drop down at varying speeds
+                    drops[i] += 0.5 + Math.random();
+                }
+            }
+            
+            // Animation loop
+            const interval = setInterval(draw, 60);
+            
+            // Resize event listener
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Return cleanup function
+            return () => {
+                clearInterval(interval);
+                window.removeEventListener('resize', resizeCanvas);
+            };
+        }
+        
+        // Initialize all matrix effects
+        document.addEventListener('DOMContentLoaded', () => {
+            setupMatrixBackground();
+            setupMatrixColumn('left-matrix');
+            setupMatrixColumn('right-matrix');
+            
+            // Set current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            
+            // Fade in sections as they scroll into view
+            function checkVisibility() {
+                const sections = document.querySelectorAll('.section');
+                
+                sections.forEach(section => {
+                    const sectionTop = section.getBoundingClientRect().top;
+                    const windowHeight = window.innerHeight;
+                    
+                    if (sectionTop < windowHeight - 100) {
+                        section.classList.add('visible');
+                    }
+                });
+            }
+            
+            // Initialize visibility on load
+            checkVisibility();
+            
+            // Check visibility on scroll
+            window.addEventListener('scroll', checkVisibility);
+        });
+    </script>
+</body>
+</html>
